@@ -30,6 +30,7 @@ const routes = [
 
 const router = new VueRouter({
   mode: 'hash',
+  base: process.env.NODE_ENV === 'production' ? '/bed-control-sample-app/' : '/',
   routes
 });
 

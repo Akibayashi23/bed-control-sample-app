@@ -7,6 +7,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'dist'),
     filename: 'bundle.js',
+    publicPath: process.env.NODE_ENV === 'production' ? '/bed-control-sample-app/' : '/',
   },
   resolve: {
     extensions: ['.ts', '.js', '.vue'],
