@@ -23,16 +23,28 @@
         <div v-if="customPresets.length > 0" class="custom-presets">
           <h3 class="custom-preset-title">カスタムプリセット</h3>
           <div class="custom-preset-buttons">
-            <button 
+            <div 
               v-for="preset in customPresets" 
               :key="preset.id"
-              class="preset-btn custom-preset-btn"
-              :disabled="isLocked"
-              @click="applyCustomPreset(preset.id)"
+              class="custom-preset-container"
             >
-              <div class="preset-icon">⭐</div>
-              <span>{{ preset.name }}</span>
-            </button>
+              <button 
+                class="preset-btn custom-preset-btn"
+                :disabled="isLocked"
+                @click="applyCustomPreset(preset.id)"
+              >
+                <div class="preset-icon">⭐</div>
+                <span>{{ preset.name }}</span>
+              </button>
+              <button 
+                class="delete-btn"
+                :disabled="isLocked"
+                @click="confirmDeletePreset(preset)"
+                :title="`${preset.name}を削除`"
+              >
+                ×
+              </button>
+            </div>
           </div>
         </div>
         
@@ -214,6 +226,25 @@
         </button>
       </template>
     </BaseModal>
+
+    <!-- 削除確認モーダル -->
+    <BaseModal :isOpen="showDeleteConfirmModal" @close="closeDeleteConfirmModal">
+      <template #title>
+        プリセット削除
+      </template>
+      <template #content>
+        <p>「<strong>{{ presetToDelete?.name }}</strong>」を削除しますか？</p>
+        <p class="delete-warning">この操作は取り消せません。</p>
+      </template>
+      <template #footer>
+        <button @click="closeDeleteConfirmModal" class="modal-btn secondary">
+          キャンセル
+        </button>
+        <button @click="deleteCustomPreset" class="modal-btn danger">
+          削除
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -236,6 +267,8 @@ export default Vue.extend({
         { type: 'eating' as PresetType, label: '食事', icon: '🍽️' }
       ],
       showCustomPresetModal: false,
+      showDeleteConfirmModal: false,
+      presetToDelete: null as any,
       customPresetForm: {
         name: '',
         back: 0,
@@ -248,7 +281,7 @@ export default Vue.extend({
     ...mapGetters(['bedPosition', 'isLocked', 'fontSize', 'customPresets'])
   },
   methods: {
-    ...mapActions(['applyPreset', 'adjustBack', 'adjustLeg', 'adjustHeight', 'addCustomPreset', 'applyCustomPreset']),
+    ...mapActions(['applyPreset', 'adjustBack', 'adjustLeg', 'adjustHeight', 'addCustomPreset', 'applyCustomPreset', 'removeCustomPreset']),
     toggleLock() {
       this.$store.commit('TOGGLE_LOCK');
     },
@@ -277,6 +310,20 @@ export default Vue.extend({
       });
       
       this.closeCustomPresetModal();
+    },
+    confirmDeletePreset(preset: any) {
+      this.presetToDelete = preset;
+      this.showDeleteConfirmModal = true;
+    },
+    closeDeleteConfirmModal() {
+      this.showDeleteConfirmModal = false;
+      this.presetToDelete = null;
+    },
+    deleteCustomPreset() {
+      if (this.presetToDelete) {
+        this.removeCustomPreset(this.presetToDelete.id);
+        this.closeDeleteConfirmModal();
+      }
     }
   },
   watch: {
@@ -502,9 +549,51 @@ export default Vue.extend({
 
 .custom-preset-buttons {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
   gap: 15px;
   margin-bottom: 15px;
+}
+
+.custom-preset-container {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.custom-preset-container .preset-btn {
+  flex: 1;
+}
+
+.delete-btn {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 24px;
+  height: 24px;
+  background: #f44336;
+  color: white;
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.delete-btn:hover:not(:disabled) {
+  background: #d32f2f;
+  transform: scale(1.1);
+}
+
+.delete-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .custom-preset-btn {
@@ -661,6 +750,21 @@ export default Vue.extend({
   background: #e9ecef;
 }
 
+.modal-btn.danger {
+  background: #f44336;
+  color: white;
+}
+
+.modal-btn.danger:hover {
+  background: #d32f2f;
+}
+
+.delete-warning {
+  color: #666;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
 @media (max-width: 600px) {
   .fine-control-group {
     flex-direction: column;
@@ -674,6 +778,6 @@ export default Vue.extend({
   }
   
   .custom-preset-buttons {
-    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
   }
 }</style>

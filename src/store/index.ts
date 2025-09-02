@@ -63,6 +63,9 @@ export default new Vuex.Store<RootState>({
     },
     ADD_CUSTOM_PRESET(state, preset: CustomPreset) {
       state.bed.customPresets.push(preset);
+    },
+    REMOVE_CUSTOM_PRESET(state, presetId: string) {
+      state.bed.customPresets = state.bed.customPresets.filter(preset => preset.id !== presetId);
     }
   },
   actions: {
@@ -129,6 +132,9 @@ export default new Vuex.Store<RootState>({
       if (preset) {
         commit('SET_BED_POSITION', preset.position);
       }
+    },
+    removeCustomPreset({ commit }, presetId: string) {
+      commit('REMOVE_CUSTOM_PRESET', presetId);
     }
   },
   getters: {
