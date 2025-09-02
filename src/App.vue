@@ -1,23 +1,28 @@
 <template>
   <div id="app" :class="{ 'large-font': fontSize === 'large' }">
-    <header class="app-header">
-      <h1 class="app-title">介護ベッド操作</h1>
-    </header>
+    <template v-if="isAuthenticated">
+      <header class="app-header">
+        <h1 class="app-title">介護ベッド操作</h1>
+        <button @click="handleLogout" class="logout-button">
+          ログアウト
+        </button>
+      </header>
 
-    <nav class="app-nav">
-      <router-link to="/home" class="nav-link" active-class="active">
-        <span class="nav-icon">🏠</span>
-        <span class="nav-text">ホーム</span>
-      </router-link>
-      <router-link to="/control" class="nav-link" active-class="active">
-        <span class="nav-icon">🎮</span>
-        <span class="nav-text">操作</span>
-      </router-link>
-      <router-link to="/settings" class="nav-link" active-class="active">
-        <span class="nav-icon">⚙️</span>
-        <span class="nav-text">設定</span>
-      </router-link>
-    </nav>
+      <nav class="app-nav">
+        <router-link to="/home" class="nav-link" active-class="active">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">ホーム</span>
+        </router-link>
+        <router-link to="/control" class="nav-link" active-class="active">
+          <span class="nav-icon">🎮</span>
+          <span class="nav-text">操作</span>
+        </router-link>
+        <router-link to="/settings" class="nav-link" active-class="active">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">設定</span>
+        </router-link>
+      </nav>
+    </template>
 
     <main class="app-main">
       <router-view />
@@ -32,13 +37,17 @@ import { mapGetters, mapActions } from 'vuex';
 export default Vue.extend({
   name: 'App',
   computed: {
-    ...mapGetters(['fontSize'])
+    ...mapGetters(['fontSize', 'isAuthenticated'])
   },
   created() {
     this.initializeSettings();
   },
   methods: {
-    ...mapActions(['initializeSettings'])
+    ...mapActions(['initializeSettings', 'logout']),
+    handleLogout() {
+      this.logout();
+      this.$router.push('/login');
+    }
   }
 });
 </script>
@@ -75,12 +84,33 @@ body {
   padding: 15px;
   text-align: center;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 }
 
 .app-title {
   margin: 0;
   font-size: 1.5em;
   font-weight: 500;
+}
+
+.logout-button {
+  position: absolute;
+  right: 15px;
+  background: rgba(255, 255, 255, 0.2);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.9em;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.3);
 }
 
 /* ナビゲーション */

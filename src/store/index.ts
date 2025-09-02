@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import { RootState, BedPosition, PresetType } from '@/types';
+import { RootState, BedPosition, PresetType, LoginCredentials } from '@/types';
 
 Vue.use(Vuex);
 
@@ -19,6 +19,10 @@ export default new Vuex.Store<RootState>({
     },
     settings: {
       fontSize: 'standard'
+    },
+    auth: {
+      isAuthenticated: false,
+      errorMessage: null
     }
   },
   mutations: {
@@ -43,6 +47,18 @@ export default new Vuex.Store<RootState>({
     SET_FONT_SIZE(state, fontSize: 'standard' | 'large') {
       state.settings.fontSize = fontSize;
       localStorage.setItem('fontSize', fontSize);
+    },
+    SET_AUTH_SUCCESS(state) {
+      state.auth.isAuthenticated = true;
+      state.auth.errorMessage = null;
+    },
+    SET_AUTH_ERROR(state, errorMessage: string) {
+      state.auth.isAuthenticated = false;
+      state.auth.errorMessage = errorMessage;
+    },
+    SET_LOGOUT(state) {
+      state.auth.isAuthenticated = false;
+      state.auth.errorMessage = null;
     }
   },
   actions: {
@@ -75,12 +91,32 @@ export default new Vuex.Store<RootState>({
       if (savedFontSize) {
         commit('SET_FONT_SIZE', savedFontSize);
       }
+    },
+    async login({ commit }, credentials: LoginCredentials) {
+      try {
+        // 固定の認証情報をチェック
+        if (credentials.email === 'demo@example.com' && credentials.password === 'demo1234') {
+          commit('SET_AUTH_SUCCESS');
+          return true;
+        } else {
+          commit('SET_AUTH_ERROR', 'メールアドレスまたはパスワードが正しくありません');
+          return false;
+        }
+      } catch (error) {
+        commit('SET_AUTH_ERROR', 'ログインエラーが発生しました');
+        return false;
+      }
+    },
+    logout({ commit }) {
+      commit('SET_LOGOUT');
     }
   },
   getters: {
     bedPosition: state => state.bed.position,
     isLocked: state => state.bed.isLocked,
     batteryLevel: state => state.bed.batteryLevel,
-    fontSize: state => state.settings.fontSize
+    fontSize: state => state.settings.fontSize,
+    isAuthenticated: state => state.auth.isAuthenticated,
+    authError: state => state.auth.errorMessage
   }
 });

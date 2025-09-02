@@ -46,6 +46,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Position limits with automatic validation
 - Battery level monitoring with color-coded display
 
+#### 5. **Authentication System**
+- Demo authentication with fixed credentials (demo@example.com / demo1234)
+- Route guards protecting all main application routes
+- Automatic redirection for authenticated/unauthenticated users
+- Logout functionality with session management
+- Error handling with user-friendly Japanese messages
+
 ## Development Setup
 
 ### Prerequisites
@@ -71,7 +78,8 @@ src/
 ├── components/         # Vue components
 │   ├── HomeView.vue    # Status display (current position, lock, battery)
 │   ├── ControlView.vue # Bed control interface
-│   └── SettingsView.vue # App settings and info
+│   ├── SettingsView.vue # App settings and info
+│   └── LoginView.vue   # Authentication interface
 ├── router/
 │   └── index.ts        # Vue Router configuration
 ├── store/
@@ -88,7 +96,8 @@ tsconfig.json          # TypeScript configuration
 ## Architecture
 
 ### Component Architecture
-- **App.vue**: Main layout with header, navigation, and router-view
+- **App.vue**: Main layout with conditional header/navigation based on auth state, logout button
+- **LoginView**: Authentication form with demo credentials and error handling
 - **HomeView**: Real-time status display with position, lock, and battery info
 - **ControlView**: Interactive controls for bed adjustment and safety lock
 - **SettingsView**: User preferences and application information
@@ -98,6 +107,8 @@ tsconfig.json          # TypeScript configuration
 - Type-safe state management with TypeScript interfaces
 - Persistent settings using localStorage
 - Validation logic for position limits and safety constraints
+- Authentication state management (isAuthenticated, error messages)
+- Fixed demo credentials validation (demo@example.com / demo1234)
 
 ### CSS Architecture
 - Global styles in App.vue for consistent theming
@@ -106,6 +117,13 @@ tsconfig.json          # TypeScript configuration
 - CSS custom properties for theming
 - Mobile-first responsive design with breakpoints
 - Accessibility considerations (focus states, reduced motion)
+
+### Routing & Authentication
+- Hash mode routing for GitHub Pages compatibility
+- Navigation guards protecting authenticated routes (/home, /control, /settings)
+- Guest-only route for login page (/login)
+- Automatic redirection based on authentication state
+- Base path configured for production deployment
 
 ### Build Configuration
 - Webpack with TypeScript and Vue loader
@@ -120,6 +138,14 @@ Currently no testing framework is set up. To add testing:
 - Jest for unit testing would be appropriate
 - End-to-end testing could use Cypress or Playwright
 
+## Authentication Usage
+
+The application starts with a login screen requiring demo credentials:
+- **Email**: demo@example.com
+- **Password**: demo1234
+
+After successful authentication, users can access all bed control features. The logout button in the header returns users to the login screen.
+
 ## Deployment
 
-The built application (`npm run build`) generates static files in the `dist/` directory that can be served by any web server. No server-side rendering or backend API required.
+The built application (`npm run build`) generates static files in the `dist/` directory that can be served by any web server. No server-side rendering or backend API required. GitHub Actions automatically deploys to GitHub Pages on push to main branch.

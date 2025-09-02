@@ -4,6 +4,11 @@ Vue 2 + TypeScript + Vuexで作成された介護ベッドの操作アプリケ�
 
 ## 機能
 
+### 認証機能
+- ログイン画面（デモ用認証情報あり）
+- 認証後のみメインアプリにアクセス可能
+- ログアウト機能
+
 ### ホーム画面
 - 現在のベッドの姿勢（背上げ・脚上げ・高さ）を表示
 - ロック状態の確認
@@ -31,6 +36,11 @@ npm run dev
 ```
 ブラウザで `http://localhost:8080` を開きます。
 
+### ログイン方法
+アプリ起動時にログイン画面が表示されます。以下のデモ認証情報を使用してください：
+- **メールアドレス**: demo@example.com
+- **パスワード**: demo1234
+
 ### ビルド
 ```bash
 npm run build
@@ -54,6 +64,10 @@ npm run lint
 ```
 src/
 ├── components/       # Vueコンポーネント
+│   ├── HomeView.vue    # ホーム画面
+│   ├── ControlView.vue # 操作画面
+│   ├── SettingsView.vue # 設定画面
+│   └── LoginView.vue   # ログイン画面
 ├── store/           # Vuexストア
 ├── router/          # Vue Routerの設定
 ├── types/           # TypeScript型定義
