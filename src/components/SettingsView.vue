@@ -69,15 +69,47 @@
         </div>
       </div>
     </div>
+
+    <div class="settings-card">
+      <h2 class="section-title">モーダルテスト</h2>
+      <button @click="showModal = true" class="modal-test-btn">
+        モーダルを開く
+      </button>
+    </div>
+
+    <BaseModal :isOpen="showModal" @close="showModal = false">
+      <template #title>
+        テストモーダル
+      </template>
+      <template #content>
+        <p>これはBaseModalのテストです。</p>
+        <p>ESCキーまたは背景クリックで閉じることができます。</p>
+        <p>フェードアニメーションも確認できます。</p>
+      </template>
+      <template #footer>
+        <button @click="showModal = false" class="modal-btn">
+          閉じる
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
 import { mapGetters, mapMutations } from 'vuex';
+import BaseModal from './BaseModal.vue';
 
 export default Vue.extend({
   name: 'SettingsView',
+  components: {
+    BaseModal
+  },
+  data() {
+    return {
+      showModal: false
+    };
+  },
   computed: {
     ...mapGetters(['fontSize'])
   },
@@ -217,6 +249,37 @@ export default Vue.extend({
   margin: 0;
   color: #666;
   line-height: 1.5;
+}
+
+/* モーダルテスト用ボタン */
+.modal-test-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 12px 24px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  transition: background-color 0.2s ease;
+}
+
+.modal-test-btn:hover {
+  background: #1976D2;
+}
+
+.modal-btn {
+  background: #2196F3;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9em;
+  transition: background-color 0.2s ease;
+}
+
+.modal-btn:hover {
+  background: #1976D2;
 }
 
 @media (max-width: 600px) {
