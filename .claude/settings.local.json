@@ -4,7 +4,8 @@
       "Bash(npm install)",
       "Bash(npm run build:*)",
       "Bash(find:*)",
-      "WebFetch(domain:qiita.com)"
+      "WebFetch(domain:qiita.com)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

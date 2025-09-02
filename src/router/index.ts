@@ -4,6 +4,7 @@ import HomeView from '@/components/HomeView.vue';
 import ControlView from '@/components/ControlView.vue';
 import SettingsView from '@/components/SettingsView.vue';
 import LoginView from '@/components/LoginView.vue';
+import SleepView from '@/components/SleepView.vue';
 import store from '@/store';
 
 Vue.use(VueRouter);
@@ -35,6 +36,12 @@ const routes = [
     path: '/settings',
     name: 'Settings',
     component: SettingsView,
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/sleep',
+    name: 'Sleep',
+    component: SleepView,
     meta: { requiresAuth: true }
   }
 ];

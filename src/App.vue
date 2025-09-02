@@ -17,6 +17,10 @@
           <span class="nav-icon">🎮</span>
           <span class="nav-text">操作</span>
         </router-link>
+        <router-link to="/sleep" class="nav-link" active-class="active">
+          <span class="nav-icon">😴</span>
+          <span class="nav-text">睡眠</span>
+        </router-link>
         <router-link to="/settings" class="nav-link" active-class="active">
           <span class="nav-icon">⚙️</span>
           <span class="nav-text">設定</span>

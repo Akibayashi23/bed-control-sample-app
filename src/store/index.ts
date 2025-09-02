@@ -1,7 +1,8 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import { RootState, BedPosition, PresetType, LoginCredentials, CustomPreset } from '@/types';
+import { RootState, BedPosition, PresetType, LoginCredentials, CustomPreset, SleepData } from '@/types';
 import { StorageService } from '@/services/storage';
+import { SleepService } from '@/services/sleep';
 
 Vue.use(Vuex);
 
@@ -41,7 +42,14 @@ export default new Vuex.Store<RootState>({
     settings: {
       fontSize: initializeFontSize()
     },
-    auth: initializeAuthState()
+    auth: initializeAuthState(),
+    sleep: {
+      dailyData: [],
+      weeklyData: [],
+      isLoading: false,
+      error: null,
+      selectedPeriod: 'daily'
+    }
   },
   mutations: {
     SET_BED_POSITION(state, position: BedPosition) {
@@ -94,6 +102,28 @@ export default new Vuex.Store<RootState>({
       state.bed.customPresets = state.bed.customPresets.filter(preset => preset.id !== presetId);
       // Persist updated custom presets
       StorageService.set('CUSTOM_PRESETS', state.bed.customPresets);
+    },
+    // Sleep mutations
+    SET_SLEEP_LOADING(state, loading: boolean) {
+      state.sleep.isLoading = loading;
+      state.sleep.error = null;
+    },
+    SET_SLEEP_ERROR(state, error: string) {
+      state.sleep.isLoading = false;
+      state.sleep.error = error;
+    },
+    SET_DAILY_SLEEP_DATA(state, data: SleepData[]) {
+      state.sleep.dailyData = data;
+      state.sleep.isLoading = false;
+      state.sleep.error = null;
+    },
+    SET_WEEKLY_SLEEP_DATA(state, data: SleepData[]) {
+      state.sleep.weeklyData = data;
+      state.sleep.isLoading = false;
+      state.sleep.error = null;
+    },
+    SET_SLEEP_PERIOD(state, period: 'daily' | 'weekly') {
+      state.sleep.selectedPeriod = period;
     }
   },
   actions: {
@@ -157,6 +187,34 @@ export default new Vuex.Store<RootState>({
     },
     removeCustomPreset({ commit }, presetId: string) {
       commit('REMOVE_CUSTOM_PRESET', presetId);
+    },
+    // Sleep actions
+    async fetchDailySleepData({ commit }) {
+      try {
+        commit('SET_SLEEP_LOADING', true);
+        const data = await SleepService.fetchDailyData();
+        commit('SET_DAILY_SLEEP_DATA', data);
+      } catch (error) {
+        commit('SET_SLEEP_ERROR', error instanceof Error ? error.message : '睡眠データの取得に失敗しました');
+      }
+    },
+    async fetchWeeklySleepData({ commit }) {
+      try {
+        commit('SET_SLEEP_LOADING', true);
+        const data = await SleepService.fetchWeeklyData();
+        commit('SET_WEEKLY_SLEEP_DATA', data);
+      } catch (error) {
+        commit('SET_SLEEP_ERROR', error instanceof Error ? error.message : '週間データの取得に失敗しました');
+      }
+    },
+    setSleepPeriod({ commit, dispatch }, period: 'daily' | 'weekly') {
+      commit('SET_SLEEP_PERIOD', period);
+      // Fetch appropriate data when period changes
+      if (period === 'daily') {
+        dispatch('fetchDailySleepData');
+      } else {
+        dispatch('fetchWeeklySleepData');
+      }
     }
   },
   getters: {
@@ -166,6 +224,11 @@ export default new Vuex.Store<RootState>({
     fontSize: state => state.settings.fontSize,
     isAuthenticated: state => state.auth.isAuthenticated,
     authError: state => state.auth.errorMessage,
-    customPresets: state => state.bed.customPresets
+    customPresets: state => state.bed.customPresets,
+    // Sleep getters
+    sleepData: state => state.sleep.selectedPeriod === 'daily' ? state.sleep.dailyData : state.sleep.weeklyData,
+    sleepLoading: state => state.sleep.isLoading,
+    sleepError: state => state.sleep.error,
+    sleepPeriod: state => state.sleep.selectedPeriod
   }
 });

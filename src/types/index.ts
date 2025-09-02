@@ -31,10 +31,27 @@ export interface LoginCredentials {
   password: string;
 }
 
+export interface SleepData {
+  date: string;
+  deepSleep: number;    // 深い眠り (分)
+  lightSleep: number;   // 浅い眠り (分)
+  awake: number;        // 覚醒 (分)
+  totalSleep: number;   // 総睡眠時間 (分)
+}
+
+export interface SleepState {
+  dailyData: SleepData[];
+  weeklyData: SleepData[];
+  isLoading: boolean;
+  error: string | null;
+  selectedPeriod: 'daily' | 'weekly';
+}
+
 export interface RootState {
   bed: BedState;
   settings: AppSettings;
   auth: AuthState;
+  sleep: SleepState;
 }
 
 export type PresetType = 'sleep' | 'reading' | 'eating';
