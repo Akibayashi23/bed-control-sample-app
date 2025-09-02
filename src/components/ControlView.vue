@@ -11,6 +11,7 @@
             v-for="preset in presets" 
             :key="preset.type"
             class="preset-btn"
+            :class="{ 'active': activePresetType === preset.type }"
             :disabled="isLocked"
             @click="applyPreset(preset.type)"
           >
@@ -30,6 +31,7 @@
             >
               <button 
                 class="preset-btn custom-preset-btn"
+                :class="{ 'active': activeCustomPresetId === preset.id }"
                 :disabled="isLocked"
                 @click="applyCustomPreset(preset.id)"
               >
@@ -248,11 +250,13 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import Vue from 'vue';
-import { mapGetters, mapActions } from 'vuex';
-import { PresetType } from '@/types';
+import { createNamespacedHelpers } from 'vuex';
 import BaseModal from './BaseModal.vue';
+
+const { mapGetters: mapBedGetters, mapActions: mapBedActions } = createNamespacedHelpers('bed');
+const { mapGetters: mapSettingsGetters } = createNamespacedHelpers('settings');
 
 export default Vue.extend({
   name: 'ControlView',
@@ -262,13 +266,13 @@ export default Vue.extend({
   data() {
     return {
       presets: [
-        { type: 'sleep' as PresetType, label: '就寝', icon: '😴' },
-        { type: 'reading' as PresetType, label: '読書', icon: '📖' },
-        { type: 'eating' as PresetType, label: '食事', icon: '🍽️' }
+        { type: 'sleep', label: '就寝', icon: '😴' },
+        { type: 'reading', label: '読書', icon: '📖' },
+        { type: 'eating', label: '食事', icon: '🍽️' }
       ],
       showCustomPresetModal: false,
       showDeleteConfirmModal: false,
-      presetToDelete: null as any,
+      presetToDelete: null,
       customPresetForm: {
         name: '',
         back: 0,
@@ -278,12 +282,13 @@ export default Vue.extend({
     };
   },
   computed: {
-    ...mapGetters(['bedPosition', 'isLocked', 'fontSize', 'customPresets'])
+    ...mapBedGetters(['bedPosition', 'isLocked', 'batteryLevel', 'customPresets', 'activePresetType', 'activeCustomPresetId']),
+    ...mapSettingsGetters(['fontSize'])
   },
   methods: {
-    ...mapActions(['applyPreset', 'adjustBack', 'adjustLeg', 'adjustHeight', 'addCustomPreset', 'applyCustomPreset', 'removeCustomPreset']),
+    ...mapBedActions(['applyPreset', 'adjustBack', 'adjustLeg', 'adjustHeight', 'addCustomPreset', 'applyCustomPreset', 'removeCustomPreset']),
     toggleLock() {
-      this.$store.commit('TOGGLE_LOCK');
+      this.$store.commit('bed/TOGGLE_LOCK');
     },
     closeCustomPresetModal() {
       this.showCustomPresetModal = false;
@@ -311,7 +316,7 @@ export default Vue.extend({
       
       this.closeCustomPresetModal();
     },
-    confirmDeletePreset(preset: any) {
+    confirmDeletePreset(preset) {
       this.presetToDelete = preset;
       this.showDeleteConfirmModal = true;
     },
@@ -327,7 +332,7 @@ export default Vue.extend({
     }
   },
   watch: {
-    showCustomPresetModal(newValue: boolean) {
+    showCustomPresetModal(newValue) {
       if (newValue) {
         // モーダル開く時に現在の姿勢を初期値として設定
         this.resetCustomPresetForm();
@@ -399,6 +404,17 @@ export default Vue.extend({
 .preset-btn:hover:not(:disabled) {
   background: #2196F3;
   color: white;
+}
+
+.preset-btn.active {
+  background: #2196F3;
+  color: white;
+  border-color: #1976D2;
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
+}
+
+.preset-btn.active:hover:not(:disabled) {
+  background: #1976D2;
 }
 
 .preset-btn:disabled {
@@ -606,6 +622,17 @@ export default Vue.extend({
   color: white;
 }
 
+.custom-preset-btn.active {
+  background: linear-gradient(135deg, #FF9800, #F57C00) !important;
+  color: white !important;
+  border-color: #E65100 !important;
+  box-shadow: 0 0 0 3px rgba(255, 152, 0, 0.2) !important;
+}
+
+.custom-preset-btn.active:hover:not(:disabled) {
+  background: linear-gradient(135deg, #F57C00, #E65100) !important;
+}
+
 .add-custom-btn {
   width: 100%;
   background: #f8f9fa;
@@ -695,6 +722,7 @@ export default Vue.extend({
   background: #e0e0e0;
   outline: none;
   -webkit-appearance: none;
+  appearance: none;
 }
 
 .range-input::-webkit-slider-thumb {

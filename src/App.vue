@@ -34,17 +34,21 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import Vue from 'vue';
-import { mapGetters, mapActions } from 'vuex';
+import { createNamespacedHelpers } from 'vuex';
+
+const { mapGetters: mapSettingsGetters } = createNamespacedHelpers('settings');
+const { mapGetters: mapAuthGetters, mapActions: mapAuthActions } = createNamespacedHelpers('auth');
 
 export default Vue.extend({
   name: 'App',
   computed: {
-    ...mapGetters(['fontSize', 'isAuthenticated'])
+    ...mapSettingsGetters(['fontSize']),
+    ...mapAuthGetters(['isAuthenticated'])
   },
   methods: {
-    ...mapActions(['logout']),
+    ...mapAuthActions(['logout']),
     handleLogout() {
       this.logout();
       this.$router.push('/login');

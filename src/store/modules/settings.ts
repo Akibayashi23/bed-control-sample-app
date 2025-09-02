@@ -12,6 +12,8 @@ export interface SettingsModuleState {
 }
 
 const settingsModule: Module<SettingsModuleState, RootState> = {
+  namespaced: true,
+  
   state: () => ({
     fontSize: initializeFontSize()
   }),

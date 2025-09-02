@@ -18,14 +18,20 @@ export interface BedModuleState {
   isLocked: boolean;
   batteryLevel: number;
   customPresets: CustomPreset[];
+  activePresetType: PresetType | null;
+  activeCustomPresetId: string | null;
 }
 
 const bedModule: Module<BedModuleState, RootState> = {
+  namespaced: true,
+  
   state: () => ({
     position: { back: 0, leg: 0, height: 30 },
     isLocked: false,
     batteryLevel: 85,
-    customPresets: initializeCustomPresets()
+    customPresets: initializeCustomPresets(),
+    activePresetType: null,
+    activeCustomPresetId: null
   }),
 
   mutations: {
@@ -53,7 +59,19 @@ const bedModule: Module<BedModuleState, RootState> = {
     },
     REMOVE_CUSTOM_PRESET(state, presetId: string) {
       state.customPresets = state.customPresets.filter(preset => preset.id !== presetId);
+      // Clear active preset if it's being deleted
+      if (state.activeCustomPresetId === presetId) {
+        state.activeCustomPresetId = null;
+      }
       StorageService.set('CUSTOM_PRESETS', state.customPresets);
+    },
+    SET_ACTIVE_PRESET(state, { type, customId }: { type: PresetType | null; customId: string | null }) {
+      state.activePresetType = type;
+      state.activeCustomPresetId = customId;
+    },
+    CLEAR_ACTIVE_PRESET(state) {
+      state.activePresetType = null;
+      state.activeCustomPresetId = null;
     }
   },
 
@@ -63,28 +81,32 @@ const bedModule: Module<BedModuleState, RootState> = {
       
       const position = PRESET_POSITIONS[preset];
       commit('SET_BED_POSITION', position);
+      commit('SET_ACTIVE_PRESET', { type: preset, customId: null });
     },
     adjustBack({ commit, state }, delta: number) {
       if (state.isLocked) return;
       
       const newBack = state.position.back + delta;
       commit('SET_BACK_POSITION', newBack);
+      commit('CLEAR_ACTIVE_PRESET');
     },
     adjustLeg({ commit, state }, delta: number) {
       if (state.isLocked) return;
       
       const newLeg = state.position.leg + delta;
       commit('SET_LEG_POSITION', newLeg);
+      commit('CLEAR_ACTIVE_PRESET');
     },
     adjustHeight({ commit, state }, delta: number) {
       if (state.isLocked) return;
       
       const newHeight = state.position.height + delta;
       commit('SET_HEIGHT_POSITION', newHeight);
+      commit('CLEAR_ACTIVE_PRESET');
     },
     addCustomPreset({ commit }, { name, position }: { name: string; position: BedPosition }) {
       const preset: CustomPreset = {
-        id: `custom-${Symbol().toString()}`,
+        id: `custom-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         name,
         position: { ...position }
       };
@@ -96,6 +118,7 @@ const bedModule: Module<BedModuleState, RootState> = {
       const preset = state.customPresets.find(p => p.id === presetId);
       if (preset) {
         commit('SET_BED_POSITION', preset.position);
+        commit('SET_ACTIVE_PRESET', { type: null, customId: presetId });
       }
     },
     removeCustomPreset({ commit }, presetId: string) {
@@ -107,7 +130,9 @@ const bedModule: Module<BedModuleState, RootState> = {
     bedPosition: state => state.position,
     isLocked: state => state.isLocked,
     batteryLevel: state => state.batteryLevel,
-    customPresets: state => state.customPresets
+    customPresets: state => state.customPresets,
+    activePresetType: state => state.activePresetType,
+    activeCustomPresetId: state => state.activeCustomPresetId
   }
 };
 

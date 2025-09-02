@@ -16,6 +16,8 @@ export interface AuthModuleState {
 }
 
 const authModule: Module<AuthModuleState, RootState> = {
+  namespaced: true,
+  
   state: () => initializeAuthState(),
 
   mutations: {

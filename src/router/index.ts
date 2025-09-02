@@ -54,7 +54,7 @@ const router = new VueRouter({
 
 // Navigation guards for authentication
 router.beforeEach((to, from, next) => {
-  const isAuthenticated = store.getters.isAuthenticated;
+  const isAuthenticated = store.getters['auth/isAuthenticated'];
   
   if (to.meta?.requiresAuth && !isAuthenticated) {
     // 認証が必要なページで未認証の場合、ログインページへリダイレクト

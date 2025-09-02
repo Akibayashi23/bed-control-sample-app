@@ -47,16 +47,21 @@
   </div>
 </template>
 
-<script lang="ts">
+<script>
 import Vue from 'vue';
-import { mapGetters } from 'vuex';
+import { createNamespacedHelpers } from 'vuex';
+
+const { mapGetters: mapBedGetters } = createNamespacedHelpers('bed');
+const { mapGetters: mapSettingsGetters } = createNamespacedHelpers('settings');
 
 export default Vue.extend({
   name: 'HomeView',
   computed: {
-    ...mapGetters(['bedPosition', 'isLocked', 'batteryLevel', 'fontSize']),
-    batteryClass(): string {
-      const level = this.$store.getters.batteryLevel as number;
+    ...mapBedGetters(['bedPosition', 'isLocked', 'batteryLevel']),
+    ...mapSettingsGetters(['fontSize']),
+    
+    batteryClass() {
+      const level = this.batteryLevel;
       if (level <= 20) return 'low';
       if (level <= 50) return 'medium';
       return 'high';

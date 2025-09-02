@@ -41,7 +41,9 @@
 
 <script lang="ts">
 import { defineComponent } from 'vue';
-import { mapGetters } from 'vuex';
+import { createNamespacedHelpers } from 'vuex';
+
+const { mapGetters: mapAuthGetters } = createNamespacedHelpers('auth');
 
 export default defineComponent({
   name: 'LoginView',
@@ -53,13 +55,13 @@ export default defineComponent({
     };
   },
   computed: {
-    ...mapGetters(['authError'])
+    ...mapAuthGetters(['authError'])
   },
   methods: {
     async handleLogin() {
       this.isLoading = true;
       
-      const success = await this.$store.dispatch('login', {
+      const success = await this.$store.dispatch('auth/login', {
         email: this.email,
         password: this.password
       });

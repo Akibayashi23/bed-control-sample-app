@@ -15,6 +15,8 @@ export interface BedState {
   isLocked: boolean;
   batteryLevel: number;
   customPresets: CustomPreset[];
+  activePresetType: PresetType | null;
+  activeCustomPresetId: string | null;
 }
 
 export interface AppSettings {

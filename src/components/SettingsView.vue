@@ -97,8 +97,10 @@
 
 <script lang="ts">
 import Vue from 'vue';
-import { mapGetters, mapMutations } from 'vuex';
+import { createNamespacedHelpers } from 'vuex';
 import BaseModal from './BaseModal.vue';
+
+const { mapGetters: mapSettingsGetters, mapMutations: mapSettingsMutations } = createNamespacedHelpers('settings');
 
 export default Vue.extend({
   name: 'SettingsView',
@@ -111,10 +113,10 @@ export default Vue.extend({
     };
   },
   computed: {
-    ...mapGetters(['fontSize'])
+    ...mapSettingsGetters(['fontSize'])
   },
   methods: {
-    ...mapMutations(['SET_FONT_SIZE']),
+    ...mapSettingsMutations(['SET_FONT_SIZE']),
     setFontSize(size: 'standard' | 'large') {
       this.SET_FONT_SIZE(size);
     }

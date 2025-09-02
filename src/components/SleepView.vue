@@ -88,8 +88,11 @@
 
 <script>
 import Vue from 'vue';
-import { mapGetters, mapActions } from 'vuex';
+import { createNamespacedHelpers } from 'vuex';
 import SleepChart from './SleepChart.vue';
+
+const { mapGetters: mapSettingsGetters } = createNamespacedHelpers('settings');
+const { mapGetters: mapSleepGetters, mapActions: mapSleepActions } = createNamespacedHelpers('sleep');
 
 export default Vue.extend({
   name: 'SleepView',
@@ -97,7 +100,8 @@ export default Vue.extend({
     SleepChart
   },
   computed: {
-    ...mapGetters(['fontSize', 'sleepData', 'sleepLoading', 'sleepError', 'sleepPeriod']),
+    ...mapSettingsGetters(['fontSize']),
+    ...mapSleepGetters(['sleepData', 'sleepLoading', 'sleepError', 'sleepPeriod']),
     
     chartData() {
       if (!this.sleepData || this.sleepData.length === 0) {
@@ -214,7 +218,7 @@ export default Vue.extend({
   },
   
   methods: {
-    ...mapActions(['setSleepPeriod', 'fetchDailySleepData', 'fetchWeeklySleepData']),
+    ...mapSleepActions(['setSleepPeriod', 'fetchDailySleepData', 'fetchWeeklySleepData']),
     
     setPeriod(period) {
       this.setSleepPeriod(period);

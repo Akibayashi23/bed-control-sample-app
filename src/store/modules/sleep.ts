@@ -11,6 +11,8 @@ export interface SleepModuleState {
 }
 
 const sleepModule: Module<SleepModuleState, RootState> = {
+  namespaced: true,
+  
   state: () => ({
     dailyData: [],
     weeklyData: [],
