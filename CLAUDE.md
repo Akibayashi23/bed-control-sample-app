@@ -8,9 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Technology Stack
 
-- **Frontend Framework**: Vue.js 2.7.14 with TypeScript
-- **State Management**: Vuex 3.6.2
-- **Routing**: Vue Router 3.6.5
+- **Frontend Framework**: Vue.js 2.7.14 with mixed TypeScript/JavaScript
+- **State Management**: Vuex 3.6.2 with namespaced modules
+- **Routing**: Vue Router 3.6.5 with authentication guards
+- **Charts**: Chart.js 2.9.4 with vue-chartjs 3.5.1
 - **Build Tool**: Webpack 5.88.2 + webpack-dev-server
 - **Code Quality**: ESLint with Vue and TypeScript plugins
 - **CSS**: Scoped CSS with responsive design
@@ -19,38 +20,43 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 #### 1. **Bed Control System**
 - Preset positions: Sleep (就寝), Reading (読書), Eating (食事)
+- Custom preset creation, editing, and deletion with confirmation dialogs
 - Fine adjustment controls (±5%) for:
   - Back position (背上げ): 0-90%
   - Leg position (脚上げ): 0-45%  
   - Height (高さ): 20-80%
 - Safety lock mechanism to prevent accidental operation
+- Visual active state indicators for selected presets
 
-#### 2. **User Interface**
-- Three main views: Home (状態), Control (操作), Settings (設定)
+#### 2. **Sleep Analysis System**
+- Interactive sleep data visualization with Chart.js
+- Daily (14-day) and weekly (7-week) view switching
+- Stacked bar charts showing deep sleep, light sleep, and awake periods
+- Sleep statistics: average sleep time, deep sleep percentage, average awake time
+- Responsive chart design with custom legend and tooltips
+
+#### 3. **User Interface**
+- Four main views: Home (状態), Control (操作), Sleep (睡眠), Settings (設定)
+- Modal system with BaseModal component for forms and confirmations
 - Responsive design with mobile-first approach
 - Accessibility features with proper focus states
 - Large font size option for elderly users
 - Japanese language interface with appropriate fonts
 
-#### 3. **State Management**
-- Vuex store managing:
-  - Bed position state with validation limits
-  - Lock status for safety
-  - Battery level simulation (85%)
-  - User preferences (font size)
-- LocalStorage persistence for settings
+#### 4. **State Management**
+- Modular Vuex store with namespaced modules:
+  - `bed`: Position state, custom presets, active preset tracking, safety lock
+  - `auth`: Authentication state with demo credentials
+  - `settings`: User preferences (font size)
+  - `sleep`: Chart data, loading states, period selection
+- Type-safe localStorage wrapper service with error handling
+- Persistent data: authentication, custom presets, font size preferences
 
-#### 4. **Safety Features**
-- Operation lock to prevent accidental changes
-- Visual lock indicators and overlay messages
-- Position limits with automatic validation
-- Battery level monitoring with color-coded display
-
-#### 5. **Authentication System**
+#### 5. **Authentication & Security**
 - Demo authentication with fixed credentials (demo@example.com / demo1234)
 - Route guards protecting all main application routes
 - Automatic redirection for authenticated/unauthenticated users
-- Logout functionality with session management
+- Logout functionality with complete state cleanup
 - Error handling with user-friendly Japanese messages
 
 ## Development Setup
@@ -73,19 +79,30 @@ npm install
 ```
 src/
 ├── main.ts              # App entry point
-├── App.vue             # Root component with navigation
+├── App.vue             # Root component with conditional auth navigation
 ├── index.html          # HTML template
-├── components/         # Vue components
-│   ├── HomeView.vue    # Status display (current position, lock, battery)
-│   ├── ControlView.vue # Bed control interface
-│   ├── SettingsView.vue # App settings and info
-│   └── LoginView.vue   # Authentication interface
+├── components/         # Vue components (mixed TS/JS)
+│   ├── BaseModal.vue   # Reusable modal component (TS)
+│   ├── HomeView.vue    # Status display (JS)
+│   ├── ControlView.vue # Bed control + custom presets (JS)
+│   ├── SleepView.vue   # Sleep analysis charts (JS)  
+│   ├── SleepChart.vue  # Chart.js wrapper (JS)
+│   ├── SettingsView.vue # App settings + modal test (TS)
+│   └── LoginView.vue   # Authentication interface (TS)
 ├── router/
-│   └── index.ts        # Vue Router configuration
+│   └── index.ts        # Vue Router with auth guards
 ├── store/
-│   └── index.ts        # Vuex store (state management)
+│   ├── index.ts        # Main store with module imports
+│   └── modules/        # Namespaced Vuex modules
+│       ├── bed.ts      # Bed state, presets, safety lock
+│       ├── auth.ts     # Authentication state
+│       ├── settings.ts # User preferences  
+│       └── sleep.ts    # Chart data and periods
+├── services/
+│   ├── storage.ts      # Type-safe localStorage wrapper
+│   └── sleep.ts        # Mock sleep data generation
 └── types/
-    └── index.ts        # TypeScript type definitions
+    └── index.ts        # TypeScript interfaces for all modules
 
 dist/                   # Built application
 webpack.config.js       # Build configuration
@@ -96,19 +113,31 @@ tsconfig.json          # TypeScript configuration
 ## Architecture
 
 ### Component Architecture
-- **App.vue**: Main layout with conditional header/navigation based on auth state, logout button
+- **App.vue**: Main layout with conditional header/navigation based on auth state
+- **BaseModal.vue**: Reusable modal with slots for title, content, and footer
 - **LoginView**: Authentication form with demo credentials and error handling
 - **HomeView**: Real-time status display with position, lock, and battery info
-- **ControlView**: Interactive controls for bed adjustment and safety lock
-- **SettingsView**: User preferences and application information
+- **ControlView**: Interactive controls, custom presets with delete confirmation
+- **SleepView**: Sleep analysis with Chart.js integration and statistics
+- **SleepChart.vue**: Chart.js wrapper component for reusable charts
+- **SettingsView**: User preferences, app info, and modal testing
 
-### State Management
-- Centralized Vuex store with mutations, actions, and getters
-- Type-safe state management with TypeScript interfaces
-- Persistent settings using localStorage
-- Validation logic for position limits and safety constraints
-- Authentication state management (isAuthenticated, error messages)
-- Fixed demo credentials validation (demo@example.com / demo1234)
+### State Management Architecture
+**Modular Vuex Store with Namespaced Modules:**
+- All modules use `namespaced: true` for proper scoping
+- Components use `createNamespacedHelpers` or direct `$store.getters['module/getter']` access
+- Mixed TypeScript/JavaScript approach for Vue components due to type inference limitations
+
+**Module Structure:**
+- **bed module**: Position state, custom presets, active preset tracking, safety validation
+- **auth module**: Authentication state with localStorage cleanup on logout
+- **settings module**: Font size preferences with persistence
+- **sleep module**: Chart data fetching, period selection, loading states
+
+**Data Persistence:**
+- `StorageService` class provides type-safe localStorage operations
+- Keys: `bed-control-auth`, `bed-control-custom-presets`, `bed-control-font-size`
+- Automatic cleanup on logout (auth + custom presets, font size preserved)
 
 ### CSS Architecture
 - Global styles in App.vue for consistent theming
@@ -127,15 +156,46 @@ tsconfig.json          # TypeScript configuration
 
 ### Build Configuration
 - Webpack with TypeScript and Vue loader
-- Development server with hot reload
+- Development server with hot reload on port 8080
 - Production optimization with terser
 - CSS processing with style-loader and css-loader
+
+## Development Patterns
+
+### TypeScript vs JavaScript Usage
+**TypeScript files:**
+- Store modules (`store/modules/*.ts`)
+- Services (`services/*.ts`) 
+- Type definitions (`types/index.ts`)
+- Router configuration
+- Components requiring complex type safety (BaseModal, LoginView, SettingsView)
+
+**JavaScript files:**
+- Vue components using `createNamespacedHelpers` (HomeView, ControlView, SleepView, SleepChart)
+- Components with Chart.js integration to avoid type inference issues
+
+### Vuex Access Patterns
+```javascript
+// Preferred: createNamespacedHelpers for JavaScript components
+const { mapGetters: mapBedGetters, mapActions: mapBedActions } = createNamespacedHelpers('bed');
+
+// Alternative: Direct store access for specific needs
+this.$store.getters['bed/activeCustomPresetId']
+this.$store.commit('bed/TOGGLE_LOCK')
+this.$store.dispatch('auth/login', credentials)
+```
+
+### Custom Preset Management
+- Unique ID generation: `custom-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`
+- Active state tracking with visual indicators
+- Automatic cleanup on manual position adjustments
+- Confirmation dialogs for deletion using BaseModal
 
 ## Testing
 
 Currently no testing framework is set up. To add testing:
 - Consider Vue Test Utils for component testing
-- Jest for unit testing would be appropriate
+- Jest for unit testing would be appropriate  
 - End-to-end testing could use Cypress or Playwright
 
 ## Authentication Usage
