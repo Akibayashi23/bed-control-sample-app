@@ -18,6 +18,33 @@
             <span>{{ preset.label }}</span>
           </button>
         </div>
+        
+        <!-- カスタムプリセット -->
+        <div v-if="customPresets.length > 0" class="custom-presets">
+          <h3 class="custom-preset-title">カスタムプリセット</h3>
+          <div class="custom-preset-buttons">
+            <button 
+              v-for="preset in customPresets" 
+              :key="preset.id"
+              class="preset-btn custom-preset-btn"
+              :disabled="isLocked"
+              @click="applyCustomPreset(preset.id)"
+            >
+              <div class="preset-icon">⭐</div>
+              <span>{{ preset.name }}</span>
+            </button>
+          </div>
+        </div>
+        
+        <!-- カスタムプリセット追加ボタン -->
+        <button 
+          class="add-custom-btn"
+          :disabled="isLocked"
+          @click="showCustomPresetModal = true"
+        >
+          <div class="add-icon">＋</div>
+          <span>カスタム追加</span>
+        </button>
       </div>
 
       <!-- ロック操作 -->
@@ -112,6 +139,81 @@
     <div v-if="isLocked" class="lock-overlay">
       <p>⚠️ 誤操作防止のため操作がロックされています</p>
     </div>
+
+    <!-- カスタムプリセット追加モーダル -->
+    <BaseModal :isOpen="showCustomPresetModal" @close="closeCustomPresetModal">
+      <template #title>
+        カスタムプリセット追加
+      </template>
+      <template #content>
+        <form @submit.prevent="saveCustomPreset">
+          <div class="form-group">
+            <label for="presetName">プリセット名 <span class="required">*</span></label>
+            <input
+              type="text"
+              id="presetName"
+              v-model="customPresetForm.name"
+              placeholder="例: リラックス"
+              required
+              maxlength="20"
+              class="form-input"
+            />
+          </div>
+          
+          <div class="form-group">
+            <label>姿勢設定</label>
+            <div class="position-controls">
+              <div class="position-item">
+                <label for="customBack">背上げ: {{ customPresetForm.back }}%</label>
+                <input
+                  type="range"
+                  id="customBack"
+                  v-model.number="customPresetForm.back"
+                  min="0"
+                  max="90"
+                  step="5"
+                  class="range-input"
+                />
+              </div>
+              
+              <div class="position-item">
+                <label for="customLeg">脚上げ: {{ customPresetForm.leg }}%</label>
+                <input
+                  type="range"
+                  id="customLeg"
+                  v-model.number="customPresetForm.leg"
+                  min="0"
+                  max="45"
+                  step="5"
+                  class="range-input"
+                />
+              </div>
+              
+              <div class="position-item">
+                <label for="customHeight">高さ: {{ customPresetForm.height }}%</label>
+                <input
+                  type="range"
+                  id="customHeight"
+                  v-model.number="customPresetForm.height"
+                  min="20"
+                  max="80"
+                  step="5"
+                  class="range-input"
+                />
+              </div>
+            </div>
+          </div>
+        </form>
+      </template>
+      <template #footer>
+        <button @click="closeCustomPresetModal" class="modal-btn secondary">
+          キャンセル
+        </button>
+        <button @click="saveCustomPreset" class="modal-btn primary" :disabled="!customPresetForm.name.trim()">
+          保存
+        </button>
+      </template>
+    </BaseModal>
   </div>
 </template>
 
@@ -119,25 +221,70 @@
 import Vue from 'vue';
 import { mapGetters, mapActions } from 'vuex';
 import { PresetType } from '@/types';
+import BaseModal from './BaseModal.vue';
 
 export default Vue.extend({
   name: 'ControlView',
+  components: {
+    BaseModal
+  },
   data() {
     return {
       presets: [
         { type: 'sleep' as PresetType, label: '就寝', icon: '😴' },
         { type: 'reading' as PresetType, label: '読書', icon: '📖' },
         { type: 'eating' as PresetType, label: '食事', icon: '🍽️' }
-      ]
+      ],
+      showCustomPresetModal: false,
+      customPresetForm: {
+        name: '',
+        back: 0,
+        leg: 0,
+        height: 30
+      }
     };
   },
   computed: {
-    ...mapGetters(['bedPosition', 'isLocked', 'fontSize'])
+    ...mapGetters(['bedPosition', 'isLocked', 'fontSize', 'customPresets'])
   },
   methods: {
-    ...mapActions(['applyPreset', 'adjustBack', 'adjustLeg', 'adjustHeight']),
+    ...mapActions(['applyPreset', 'adjustBack', 'adjustLeg', 'adjustHeight', 'addCustomPreset', 'applyCustomPreset']),
     toggleLock() {
       this.$store.commit('TOGGLE_LOCK');
+    },
+    closeCustomPresetModal() {
+      this.showCustomPresetModal = false;
+      this.resetCustomPresetForm();
+    },
+    resetCustomPresetForm() {
+      this.customPresetForm = {
+        name: '',
+        back: this.bedPosition.back,
+        leg: this.bedPosition.leg,
+        height: this.bedPosition.height
+      };
+    },
+    saveCustomPreset() {
+      if (!this.customPresetForm.name.trim()) return;
+      
+      this.addCustomPreset({
+        name: this.customPresetForm.name.trim(),
+        position: {
+          back: this.customPresetForm.back,
+          leg: this.customPresetForm.leg,
+          height: this.customPresetForm.height
+        }
+      });
+      
+      this.closeCustomPresetModal();
+    }
+  },
+  watch: {
+    showCustomPresetModal(newValue: boolean) {
+      if (newValue) {
+        // モーダル開く時に現在の姿勢を初期値として設定
+        this.resetCustomPresetForm();
+      }
     }
   }
 });
@@ -339,6 +486,181 @@ export default Vue.extend({
   z-index: 1000;
 }
 
+/* カスタムプリセット */
+.custom-presets {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.custom-preset-title {
+  margin: 0 0 15px 0;
+  font-size: 1em;
+  color: #666;
+  font-weight: 500;
+}
+
+.custom-preset-buttons {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  gap: 15px;
+  margin-bottom: 15px;
+}
+
+.custom-preset-btn {
+  border: 2px solid #FF9800;
+  background: linear-gradient(135deg, #FFF8E1, #FFECB3);
+}
+
+.custom-preset-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: white;
+}
+
+.add-custom-btn {
+  width: 100%;
+  background: #f8f9fa;
+  border: 2px dashed #ccc;
+  border-radius: 8px;
+  padding: 15px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #666;
+  margin-top: 15px;
+}
+
+.add-custom-btn:hover:not(:disabled) {
+  background: #e9ecef;
+  border-color: #2196F3;
+  color: #2196F3;
+}
+
+.add-custom-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  border-color: #ddd;
+  color: #999;
+}
+
+.add-icon {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+/* モーダルフォーム */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #333;
+}
+
+.required {
+  color: #f44336;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: #2196F3;
+}
+
+.position-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.position-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.position-item label {
+  font-size: 14px;
+  color: #555;
+  margin-bottom: 0;
+}
+
+.range-input {
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: #e0e0e0;
+  outline: none;
+  -webkit-appearance: none;
+}
+
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2196F3;
+  cursor: pointer;
+}
+
+.range-input::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #2196F3;
+  cursor: pointer;
+  border: none;
+}
+
+.modal-btn {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.modal-btn.primary {
+  background: #2196F3;
+  color: white;
+}
+
+.modal-btn.primary:hover:not(:disabled) {
+  background: #1976D2;
+}
+
+.modal-btn.primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.modal-btn.secondary {
+  background: #f5f5f5;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.modal-btn.secondary:hover {
+  background: #e9ecef;
+}
+
 @media (max-width: 600px) {
   .fine-control-group {
     flex-direction: column;
@@ -349,5 +671,9 @@ export default Vue.extend({
   
   .control-buttons {
     justify-content: center;
+  }
+  
+  .custom-preset-buttons {
+    grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
   }
 }</style>

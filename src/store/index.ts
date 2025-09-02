@@ -1,6 +1,6 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
-import { RootState, BedPosition, PresetType, LoginCredentials } from '@/types';
+import { RootState, BedPosition, PresetType, LoginCredentials, CustomPreset } from '@/types';
 
 Vue.use(Vuex);
 
@@ -15,7 +15,8 @@ export default new Vuex.Store<RootState>({
     bed: {
       position: { back: 0, leg: 0, height: 30 },
       isLocked: false,
-      batteryLevel: 85
+      batteryLevel: 85,
+      customPresets: []
     },
     settings: {
       fontSize: 'standard'
@@ -59,6 +60,9 @@ export default new Vuex.Store<RootState>({
     SET_LOGOUT(state) {
       state.auth.isAuthenticated = false;
       state.auth.errorMessage = null;
+    },
+    ADD_CUSTOM_PRESET(state, preset: CustomPreset) {
+      state.bed.customPresets.push(preset);
     }
   },
   actions: {
@@ -109,6 +113,22 @@ export default new Vuex.Store<RootState>({
     },
     logout({ commit }) {
       commit('SET_LOGOUT');
+    },
+    addCustomPreset({ commit }, { name, position }: { name: string; position: BedPosition }) {
+      const preset: CustomPreset = {
+        id: `custom-${Symbol().toString()}`,
+        name,
+        position: { ...position }
+      };
+      commit('ADD_CUSTOM_PRESET', preset);
+    },
+    applyCustomPreset({ commit, state }, presetId: string) {
+      if (state.bed.isLocked) return;
+      
+      const preset = state.bed.customPresets.find(p => p.id === presetId);
+      if (preset) {
+        commit('SET_BED_POSITION', preset.position);
+      }
     }
   },
   getters: {
@@ -117,6 +137,7 @@ export default new Vuex.Store<RootState>({
     batteryLevel: state => state.bed.batteryLevel,
     fontSize: state => state.settings.fontSize,
     isAuthenticated: state => state.auth.isAuthenticated,
-    authError: state => state.auth.errorMessage
+    authError: state => state.auth.errorMessage,
+    customPresets: state => state.bed.customPresets
   }
 });

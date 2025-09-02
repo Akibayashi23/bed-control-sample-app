@@ -4,10 +4,17 @@ export interface BedPosition {
   height: number;
 }
 
+export interface CustomPreset {
+  id: string;
+  name: string;
+  position: BedPosition;
+}
+
 export interface BedState {
   position: BedPosition;
   isLocked: boolean;
   batteryLevel: number;
+  customPresets: CustomPreset[];
 }
 
 export interface AppSettings {
