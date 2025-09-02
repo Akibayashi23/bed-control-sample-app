@@ -1,6 +1,7 @@
 import Vue from 'vue';
 import Vuex from 'vuex';
 import { RootState, BedPosition, PresetType, LoginCredentials, CustomPreset } from '@/types';
+import { StorageService } from '@/services/storage';
 
 Vue.use(Vuex);
 
@@ -10,21 +11,37 @@ const PRESET_POSITIONS: Record<PresetType, BedPosition> = {
   eating: { back: 60, leg: 30, height: 70 }
 };
 
+// Initialize state from localStorage
+const initializeAuthState = () => {
+  const savedAuth = StorageService.get<{ isAuthenticated: boolean }>('AUTH_STATE');
+  return {
+    isAuthenticated: savedAuth?.isAuthenticated || false,
+    errorMessage: null
+  };
+};
+
+const initializeCustomPresets = (): CustomPreset[] => {
+  const savedPresets = StorageService.get<CustomPreset[]>('CUSTOM_PRESETS');
+  return savedPresets || [];
+};
+
+const initializeFontSize = (): 'standard' | 'large' => {
+  const savedFontSize = StorageService.get<'standard' | 'large'>('FONT_SIZE');
+  return savedFontSize || 'standard';
+};
+
 export default new Vuex.Store<RootState>({
   state: {
     bed: {
       position: { back: 0, leg: 0, height: 30 },
       isLocked: false,
       batteryLevel: 85,
-      customPresets: []
+      customPresets: initializeCustomPresets()
     },
     settings: {
-      fontSize: 'standard'
+      fontSize: initializeFontSize()
     },
-    auth: {
-      isAuthenticated: false,
-      errorMessage: null
-    }
+    auth: initializeAuthState()
   },
   mutations: {
     SET_BED_POSITION(state, position: BedPosition) {
@@ -47,25 +64,36 @@ export default new Vuex.Store<RootState>({
     },
     SET_FONT_SIZE(state, fontSize: 'standard' | 'large') {
       state.settings.fontSize = fontSize;
-      localStorage.setItem('fontSize', fontSize);
+      // Use StorageService for consistency
+      StorageService.set('FONT_SIZE', fontSize);
     },
     SET_AUTH_SUCCESS(state) {
       state.auth.isAuthenticated = true;
       state.auth.errorMessage = null;
+      // Persist auth state
+      StorageService.set('AUTH_STATE', { isAuthenticated: true });
     },
     SET_AUTH_ERROR(state, errorMessage: string) {
       state.auth.isAuthenticated = false;
       state.auth.errorMessage = errorMessage;
+      // Remove auth state from storage on error
+      StorageService.remove('AUTH_STATE');
     },
     SET_LOGOUT(state) {
       state.auth.isAuthenticated = false;
       state.auth.errorMessage = null;
+      // Remove auth state from storage on logout
+      StorageService.remove('AUTH_STATE');
     },
     ADD_CUSTOM_PRESET(state, preset: CustomPreset) {
       state.bed.customPresets.push(preset);
+      // Persist custom presets
+      StorageService.set('CUSTOM_PRESETS', state.bed.customPresets);
     },
     REMOVE_CUSTOM_PRESET(state, presetId: string) {
       state.bed.customPresets = state.bed.customPresets.filter(preset => preset.id !== presetId);
+      // Persist updated custom presets
+      StorageService.set('CUSTOM_PRESETS', state.bed.customPresets);
     }
   },
   actions: {
@@ -92,12 +120,6 @@ export default new Vuex.Store<RootState>({
       
       const newHeight = state.bed.position.height + delta;
       commit('SET_HEIGHT_POSITION', newHeight);
-    },
-    initializeSettings({ commit }) {
-      const savedFontSize = localStorage.getItem('fontSize') as 'standard' | 'large' | null;
-      if (savedFontSize) {
-        commit('SET_FONT_SIZE', savedFontSize);
-      }
     },
     async login({ commit }, credentials: LoginCredentials) {
       try {

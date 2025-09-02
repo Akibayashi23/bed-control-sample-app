@@ -39,11 +39,8 @@ export default Vue.extend({
   computed: {
     ...mapGetters(['fontSize', 'isAuthenticated'])
   },
-  created() {
-    this.initializeSettings();
-  },
   methods: {
-    ...mapActions(['initializeSettings', 'logout']),
+    ...mapActions(['logout']),
     handleLogout() {
       this.logout();
       this.$router.push('/login');
