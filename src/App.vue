@@ -30,7 +30,12 @@
           <span class="nav-icon">⚙️</span>
           <span class="nav-text">設定</span>
         </router-link>
-        <router-link to="/admin" class="nav-link" active-class="active">
+        <router-link 
+          v-if="canAccessAdmin" 
+          to="/admin" 
+          class="nav-link" 
+          active-class="active"
+        >
           <span class="nav-icon">👤</span>
           <span class="nav-text">管理</span>
         </router-link>
@@ -58,6 +63,9 @@ export default Vue.extend({
     ...mapAuthGetters(['isAuthenticated', 'currentUser']),
     canAccessControl() {
       return hasRoleOrHigher(this.currentUser, 'caregiver');
+    },
+    canAccessAdmin() {
+      return hasRoleOrHigher(this.currentUser, 'admin');
     }
   },
   methods: {
