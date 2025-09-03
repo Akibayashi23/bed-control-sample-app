@@ -36,12 +36,15 @@ export interface LoginCredentials {
 
 export type Role = 'admin' | 'caregiver' | 'viewer';
 
+export type UserStatus = 'active' | 'inactive' | 'pending';
+
 export interface User {
   id: string;
   email: string;
   name: string;
   role: Role;
   isActive: boolean;
+  status: UserStatus;
 }
 
 export interface SleepData {

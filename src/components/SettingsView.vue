@@ -31,6 +31,30 @@
     </div>
 
     <div class="settings-card">
+      <h2 class="section-title">ユーザー情報</h2>
+      
+      <div class="info-item">
+        <span class="info-label">ログイン中:</span>
+        <span class="info-value">{{ currentUser?.name || '未ログイン' }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">メールアドレス:</span>
+        <span class="info-value">{{ currentUser?.email || '---' }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">ロール:</span>
+        <span class="info-value user-role" :class="roleClass">{{ roleDisplayName }}</span>
+      </div>
+      
+      <div class="info-item">
+        <span class="info-label">ステータス:</span>
+        <span class="info-value user-status" :class="statusClass">{{ statusDisplayName }}</span>
+      </div>
+    </div>
+
+    <div class="settings-card">
       <h2 class="section-title">アプリ情報</h2>
       
       <div class="info-item">
@@ -47,6 +71,11 @@
         <span class="info-label">対応ベッド:</span>
         <span class="info-value">汎用電動ベッド</span>
       </div>
+      
+      <div class="info-item">
+        <span class="info-label">最終更新:</span>
+        <span class="info-value">2025年9月</span>
+      </div>
     </div>
 
     <div class="settings-card">
@@ -55,70 +84,92 @@
       <div class="usage-instructions">
         <div class="instruction-item">
           <strong>🏠 ホーム画面:</strong>
-          <p>現在のベッドの状態を確認できます</p>
+          <p>現在のベッド状態、アクティブプリセット、昨夜の睡眠情報を確認できます</p>
         </div>
         
         <div class="instruction-item">
           <strong>🎮 操作画面:</strong>
-          <p>プリセット適用や細かい調整が行えます</p>
+          <p>プリセット適用、カスタムプリセット管理、細かい位置調整が行えます</p>
+        </div>
+        
+        <div class="instruction-item">
+          <strong>📊 睡眠分析:</strong>
+          <p>過去14日間・7週間の睡眠データをグラフで確認できます</p>
+        </div>
+        
+        <div class="instruction-item" v-if="canViewAdmin">
+          <strong>⚙️ 管理画面:</strong>
+          <p>ユーザー管理、ロール変更、システム管理が行えます（管理者権限必要）</p>
+        </div>
+        
+        <div class="instruction-item">
+          <strong>⭐ カスタムプリセット:</strong>
+          <p>お好みの位置を保存して、ワンクリックで適用できます</p>
         </div>
         
         <div class="instruction-item">
           <strong>🔒 安全ロック:</strong>
-          <p>誤操作を防ぐためのロック機能です</p>
+          <p>誤操作を防ぐためのロック機能です。ロック中は位置調整ができません</p>
         </div>
       </div>
     </div>
 
-    <div class="settings-card">
-      <h2 class="section-title">モーダルテスト</h2>
-      <button @click="showModal = true" class="modal-test-btn">
-        モーダルを開く
-      </button>
-    </div>
-
-    <BaseModal :isOpen="showModal" @close="showModal = false">
-      <template #title>
-        テストモーダル
-      </template>
-      <template #content>
-        <p>これはBaseModalのテストです。</p>
-        <p>ESCキーまたは背景クリックで閉じることができます。</p>
-        <p>フェードアニメーションも確認できます。</p>
-      </template>
-      <template #footer>
-        <button @click="showModal = false" class="modal-btn">
-          閉じる
-        </button>
-      </template>
-    </BaseModal>
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue';
-import { createNamespacedHelpers } from 'vuex';
-import BaseModal from './BaseModal.vue';
-
-const { mapGetters: mapSettingsGetters, mapMutations: mapSettingsMutations } = createNamespacedHelpers('settings');
+import { can, PERMISSIONS } from '@/utils/permissions';
+import type { User, Role, UserStatus } from '@/types';
 
 export default Vue.extend({
   name: 'SettingsView',
-  components: {
-    BaseModal
-  },
-  data() {
-    return {
-      showModal: false
-    };
-  },
   computed: {
-    ...mapSettingsGetters(['fontSize'])
+    fontSize(): 'standard' | 'large' {
+      return this.$store.getters['settings/fontSize'];
+    },
+    
+    currentUser(): User | null {
+      return this.$store.getters['auth/currentUser'];
+    },
+    
+    canViewAdmin(): boolean {
+      return can(this.currentUser, PERMISSIONS.ADMIN_VIEW);
+    },
+    
+    roleDisplayName(): string {
+      if (!this.currentUser?.role) return '---';
+      const roleMap: Record<Role, string> = {
+        'admin': '管理者',
+        'caregiver': '介護士',
+        'viewer': '閲覧者'
+      };
+      return roleMap[this.currentUser.role] || this.currentUser.role;
+    },
+    
+    roleClass(): string {
+      if (!this.currentUser?.role) return '';
+      return `role-${this.currentUser.role}`;
+    },
+    
+    statusDisplayName(): string {
+      if (!this.currentUser?.status) return '---';
+      const statusMap: Record<UserStatus, string> = {
+        'active': 'アクティブ',
+        'inactive': '非アクティブ',
+        'pending': '承認待ち'
+      };
+      return statusMap[this.currentUser.status] || this.currentUser.status;
+    },
+    
+    statusClass(): string {
+      if (!this.currentUser?.status) return '';
+      return `status-${this.currentUser.status}`;
+    }
   },
   methods: {
-    ...mapSettingsMutations(['SET_FONT_SIZE']),
-    setFontSize(size: 'standard' | 'large') {
-      this.SET_FONT_SIZE(size);
+    setFontSize(size: 'standard' | 'large'): void {
+      this.$store.commit('settings/SET_FONT_SIZE', size);
     }
   }
 });
@@ -253,35 +304,35 @@ export default Vue.extend({
   line-height: 1.5;
 }
 
-/* モーダルテスト用ボタン */
-.modal-test-btn {
-  background: #2196F3;
-  color: white;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 1em;
-  transition: background-color 0.2s ease;
+/* ユーザー情報の色分け */
+.user-role.role-admin {
+  color: #d32f2f;
+  font-weight: 600;
 }
 
-.modal-test-btn:hover {
-  background: #1976D2;
+.user-role.role-caregiver {
+  color: #1976d2;
+  font-weight: 600;
 }
 
-.modal-btn {
-  background: #2196F3;
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.9em;
-  transition: background-color 0.2s ease;
+.user-role.role-viewer {
+  color: #388e3c;
+  font-weight: 600;
 }
 
-.modal-btn:hover {
-  background: #1976D2;
+.user-status.status-active {
+  color: #388e3c;
+  font-weight: 500;
+}
+
+.user-status.status-inactive {
+  color: #f57c00;
+  font-weight: 500;
+}
+
+.user-status.status-pending {
+  color: #d32f2f;
+  font-weight: 500;
 }
 
 @media (max-width: 600px) {
