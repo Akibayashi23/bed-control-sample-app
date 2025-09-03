@@ -22,6 +22,7 @@ export const PERMISSIONS = {
   ADMIN_VIEW: 'admin:view',
   USER_MANAGE: 'user:manage',
   USER_VIEW: 'user:view',
+  USER_EDIT: 'user:edit',
   
   // 設定
   SETTINGS_VIEW: 'settings:view',
@@ -45,6 +46,7 @@ export const ROLE_PERMISSIONS: Record<Role, string[]> = {
     PERMISSIONS.ADMIN_VIEW,
     PERMISSIONS.USER_MANAGE,
     PERMISSIONS.USER_VIEW,
+    PERMISSIONS.USER_EDIT,
     PERMISSIONS.SETTINGS_VIEW,
     PERMISSIONS.SETTINGS_MANAGE
   ],

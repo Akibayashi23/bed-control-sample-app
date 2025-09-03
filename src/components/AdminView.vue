@@ -45,6 +45,7 @@
               <th>メール</th>
               <th>ロール</th>
               <th>状態</th>
+              <th v-if="canEditUsers">操作</th>
             </tr>
           </thead>
           <tbody>
@@ -56,6 +57,15 @@
                 <span :class="['status-badge', user.status]">
                   {{ getStatusDisplayName(user.status) }}
                 </span>
+              </td>
+              <td v-if="canEditUsers">
+                <button 
+                  @click="openEditModal(user)" 
+                  class="edit-button"
+                  :title="`${user.name}を編集`"
+                >
+                  編集
+                </button>
               </td>
             </tr>
           </tbody>
@@ -85,12 +95,81 @@
         </button>
       </div>
     </div>
+
+    <!-- 編集モーダル -->
+    <BaseModal 
+      :is-open="showEditModal" 
+      @close="closeEditModal"
+    >
+      <template #title>
+        ユーザー編集
+      </template>
+      
+      <template #content>
+        <div class="form-group">
+          <label>名前</label>
+          <input 
+            type="text" 
+            v-model="editForm.name" 
+            class="form-input"
+            readonly
+          />
+        </div>
+        
+        <div class="form-group">
+          <label>メール</label>
+          <input 
+            type="email" 
+            v-model="editForm.email" 
+            class="form-input"
+            readonly
+          />
+        </div>
+        
+        <div class="form-group">
+          <label>ロール</label>
+          <select v-model="editForm.role" class="form-select">
+            <option value="admin">管理者</option>
+            <option value="caregiver">介護士</option>
+            <option value="viewer">閲覧者</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label>状態</label>
+          <select v-model="editForm.status" class="form-select">
+            <option value="active">アクティブ</option>
+            <option value="inactive">非アクティブ</option>
+            <option value="pending">承認待ち</option>
+          </select>
+        </div>
+      </template>
+      
+      <template #footer>
+        <button @click="closeEditModal" class="cancel-button">
+          キャンセル
+        </button>
+        <button @click="saveUser" class="save-button">
+          保存
+        </button>
+      </template>
+    </BaseModal>
+
   </div>
 </template>
 
 <script>
+import { can, PERMISSIONS } from '@/utils/permissions';
+import { createNamespacedHelpers } from 'vuex';
+import BaseModal from '@/components/BaseModal.vue';
+
+const { mapGetters: mapAuthGetters } = createNamespacedHelpers('auth');
+
 export default {
   name: 'AdminView',
+  components: {
+    BaseModal
+  },
   data() {
     return {
       // フィルタ条件
@@ -105,6 +184,16 @@ export default {
       
       // debounce用
       searchDebounceTimer: null,
+      
+      // 編集モーダル
+      showEditModal: false,
+      editForm: {
+        id: null,
+        name: '',
+        email: '',
+        role: '',
+        status: ''
+      },
       
       // ダミーユーザーデータ（テスト用に追加データを含む）
       users: [
@@ -196,6 +285,13 @@ export default {
     };
   },
   computed: {
+    ...mapAuthGetters(['currentUser']),
+    
+    // 権限チェック
+    canEditUsers() {
+      return can(this.currentUser, PERMISSIONS.USER_EDIT);
+    },
+    
     // フィルタリングされたユーザー一覧
     filteredUsers() {
       let filtered = this.users;
@@ -298,6 +394,55 @@ export default {
     goToPage(page) {
       if (page >= 1 && page <= this.totalPages) {
         this.currentPage = page;
+      }
+    },
+    
+    // 編集モーダルを開く
+    openEditModal(user) {
+      this.editForm = {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        status: user.status
+      };
+      this.showEditModal = true;
+    },
+    
+    // 編集モーダルを閉じる
+    closeEditModal() {
+      this.showEditModal = false;
+      this.editForm = {
+        id: null,
+        name: '',
+        email: '',
+        role: '',
+        status: ''
+      };
+    },
+    
+    // ユーザー情報を保存
+    saveUser() {
+      try {
+        // ダミー配列から対象ユーザーを見つけて更新
+        const userIndex = this.users.findIndex(user => user.id === this.editForm.id);
+        if (userIndex !== -1) {
+          this.users[userIndex].role = this.editForm.role;
+          this.users[userIndex].status = this.editForm.status;
+          
+          this.$toast.success(
+            `${this.editForm.name}の情報を更新しました。`,
+            { description: 'ロールと状態が正常に変更されました' }
+          );
+          this.closeEditModal();
+        } else {
+          throw new Error('ユーザーが見つかりません');
+        }
+      } catch (error) {
+        this.$toast.error(
+          'ユーザー情報の更新に失敗しました。',
+          { description: 'もう一度お試しください' }
+        );
       }
     }
   },
@@ -464,6 +609,85 @@ export default {
 .status-badge.pending {
   background-color: #fff3cd;
   color: #856404;
+}
+
+/* 編集ボタン */
+.edit-button {
+  padding: 6px 12px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.2s;
+}
+
+.edit-button:hover {
+  background-color: #218838;
+}
+
+/* フォームスタイル（BaseModal用） */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+  color: #333;
+}
+
+.form-input,
+.form-select {
+  width: 100%;
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.2s;
+}
+
+.form-input:focus,
+.form-select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.form-input[readonly] {
+  background-color: #f8f9fa;
+  color: #6c757d;
+}
+
+.cancel-button {
+  padding: 10px 20px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+  background-color: #545b62;
+}
+
+.save-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
+}
+
+.save-button:hover {
+  background-color: #0056b3;
 }
 
 /* ページネーション */
