@@ -6,6 +6,7 @@ import SettingsView from '@/components/SettingsView.vue';
 import LoginView from '@/components/LoginView.vue';
 import SleepView from '@/components/SleepView.vue';
 import ForbiddenView from '@/components/ForbiddenView.vue';
+import AdminView from '@/components/AdminView.vue';
 import store from '@/store';
 import { hasRoleOrHigher } from '@/utils/permissions';
 
@@ -49,6 +50,12 @@ const routes = [
     path: '/sleep',
     name: 'Sleep',
     component: SleepView,
+    meta: { requiresAuth: true, requiresRole: 'viewer' }
+  },
+  {
+    path: '/admin',
+    name: 'Admin',
+    component: AdminView,
     meta: { requiresAuth: true, requiresRole: 'viewer' }
   }
 ];

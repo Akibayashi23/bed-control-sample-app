@@ -30,6 +30,10 @@
           <span class="nav-icon">⚙️</span>
           <span class="nav-text">設定</span>
         </router-link>
+        <router-link to="/admin" class="nav-link" active-class="active">
+          <span class="nav-icon">👤</span>
+          <span class="nav-text">管理</span>
+        </router-link>
       </nav>
     </template>
 
