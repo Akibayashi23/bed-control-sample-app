@@ -32,8 +32,24 @@
       </form>
       <div class="demo-credentials">
         <p>デモ用認証情報:</p>
-        <p>Email: demo@example.com</p>
-        <p>Password: demo1234</p>
+        <div class="demo-user">
+          <p><strong>管理者 (Admin)</strong></p>
+          <p>Email: demo@example.com</p>
+          <p>Password: demo1234</p>
+          <p class="role-desc">全機能アクセス可能</p>
+        </div>
+        <div class="demo-user">
+          <p><strong>介護士 (Caregiver)</strong></p>
+          <p>Email: caregiver@example.com</p>
+          <p>Password: demo1234</p>
+          <p class="role-desc">ベッド操作・睡眠分析可能</p>
+        </div>
+        <div class="demo-user">
+          <p><strong>閲覧者 (Viewer)</strong></p>
+          <p>Email: viewer@example.com</p>
+          <p>Password: demo1234</p>
+          <p class="role-desc">閲覧のみ</p>
+        </div>
       </div>
     </div>
   </div>
@@ -173,15 +189,39 @@ input:disabled {
   border-left: 4px solid #38a169;
 }
 
-.demo-credentials p {
-  margin: 5px 0;
+.demo-credentials > p {
+  margin: 0 0 15px 0;
+  font-size: 16px;
+  color: #2d3748;
+  font-weight: 600;
+}
+
+.demo-user {
+  margin-bottom: 15px;
+  padding: 12px;
+  background: white;
+  border-radius: 4px;
+  border: 1px solid #e2e8f0;
+}
+
+.demo-user:last-child {
+  margin-bottom: 0;
+}
+
+.demo-user p {
+  margin: 4px 0;
   font-size: 14px;
   color: #2d3748;
 }
 
-.demo-credentials p:first-child {
-  font-weight: 600;
-  margin-bottom: 10px;
+.demo-user p strong {
+  color: #2c5282;
+}
+
+.role-desc {
+  color: #4a5568 !important;
+  font-style: italic;
+  font-size: 12px !important;
 }
 
 @media (max-width: 480px) {

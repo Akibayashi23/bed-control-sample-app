@@ -13,7 +13,12 @@
           <span class="nav-icon">🏠</span>
           <span class="nav-text">ホーム</span>
         </router-link>
-        <router-link to="/control" class="nav-link" active-class="active">
+        <router-link 
+          v-if="canAccessControl" 
+          to="/control" 
+          class="nav-link" 
+          active-class="active"
+        >
           <span class="nav-icon">🎮</span>
           <span class="nav-text">操作</span>
         </router-link>
@@ -37,6 +42,7 @@
 <script>
 import Vue from 'vue';
 import { createNamespacedHelpers } from 'vuex';
+import { hasRoleOrHigher } from '@/utils/permissions';
 
 const { mapGetters: mapSettingsGetters } = createNamespacedHelpers('settings');
 const { mapGetters: mapAuthGetters, mapActions: mapAuthActions } = createNamespacedHelpers('auth');
@@ -45,7 +51,10 @@ export default Vue.extend({
   name: 'App',
   computed: {
     ...mapSettingsGetters(['fontSize']),
-    ...mapAuthGetters(['isAuthenticated'])
+    ...mapAuthGetters(['isAuthenticated', 'currentUser']),
+    canAccessControl() {
+      return hasRoleOrHigher(this.currentUser, 'caregiver');
+    }
   },
   methods: {
     ...mapAuthActions(['logout']),

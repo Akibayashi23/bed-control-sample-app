@@ -25,12 +25,23 @@ export interface AppSettings {
 
 export interface AuthState {
   isAuthenticated: boolean;
+  currentUser: User | null;
   errorMessage: string | null;
 }
 
 export interface LoginCredentials {
   email: string;
   password: string;
+}
+
+export type Role = 'admin' | 'caregiver' | 'viewer';
+
+export interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: Role;
+  isActive: boolean;
 }
 
 export interface SleepData {
