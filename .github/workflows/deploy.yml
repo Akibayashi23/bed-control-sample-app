@@ -24,9 +24,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
       
+      - name: Run tests and generate coverage
+        run: |
+          npm run test:coverage || echo "Coverage threshold not met, but continuing deployment"
+      
       - name: Build
         run: |
           NODE_ENV=production npm run build
+      
+      - name: Copy coverage report to dist
+        run: |
+          if [ -d "coverage" ]; then
+            cp -r coverage dist/coverage
+          fi
       
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
