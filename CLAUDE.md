@@ -13,6 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Routing**: Vue Router 3.6.5 with authentication guards
 - **Charts**: Chart.js 2.9.4 with vue-chartjs 3.5.1
 - **Build Tool**: Webpack 5.88.2 + webpack-dev-server
+- **Testing**: Vitest 3.2.4 with jsdom + Vue Testing Library
 - **Code Quality**: ESLint with Vue and TypeScript plugins
 - **CSS**: Scoped CSS with responsive design
 
@@ -74,6 +75,10 @@ npm install
 - **Start dev server**: `npm run dev` (http://localhost:8080)
 - **Build for production**: `npm run build`
 - **Run linting**: `npm run lint`
+- **Run tests**: `npm test` (single run)
+- **Watch tests**: `npm run test:watch` (continuous)
+- **Test coverage**: `npm run test:coverage`
+- **Test UI**: `npm run test:ui` (Vitest UI interface)
 
 ### Project Structure
 ```
@@ -101,11 +106,14 @@ src/
 ├── services/
 │   ├── storage.ts      # Type-safe localStorage wrapper
 │   └── sleep.ts        # Mock sleep data generation
-└── types/
-    └── index.ts        # TypeScript interfaces for all modules
+├── types/
+│   └── index.ts        # TypeScript interfaces for all modules
+└── test/
+    └── setup.js        # Vitest test setup configuration
 
 dist/                   # Built application
 webpack.config.js       # Build configuration
+vitest.config.js       # Vitest test configuration
 tsconfig.json          # TypeScript configuration
 .eslintrc.js           # ESLint configuration
 ```
@@ -193,10 +201,32 @@ this.$store.dispatch('auth/login', credentials)
 
 ## Testing
 
-Currently no testing framework is set up. To add testing:
-- Consider Vue Test Utils for component testing
-- Jest for unit testing would be appropriate  
-- End-to-end testing could use Cypress or Playwright
+### Test Framework
+- **Testing Library**: Vitest with jsdom environment
+- **Component Testing**: Vue Testing Library + @vue/test-utils
+- **Coverage**: v8 provider with HTML/text reports
+- **Coverage Thresholds**: 60% for lines/functions/branches/statements
+
+### Test Structure
+```
+src/
+├── components/__tests__/
+│   └── BaseModal.test.js     # BaseModal component tests
+└── store/modules/__tests__/
+    └── bed.test.ts           # bed store module tests
+```
+
+### Running Tests
+- Single run: `npm test`
+- Watch mode: `npm run test:watch`
+- Coverage report: `npm run test:coverage`
+- UI interface: `npm run test:ui`
+
+### Test Configuration
+- Global setup in `src/test/setup.js`
+- Vitest config in `vitest.config.js`
+- Path alias `@` points to `src/`
+- Console warnings filtered for Vue
 
 ## Authentication Usage
 
