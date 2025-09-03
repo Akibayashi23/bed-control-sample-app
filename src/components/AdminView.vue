@@ -49,6 +49,18 @@
             </tr>
           </thead>
           <tbody>
+            <tr v-if="filteredUsers.length === 0" class="empty-row">
+              <td :colspan="canEditUsers ? 5 : 4" class="empty-state">
+                <div class="empty-message">
+                  <div class="empty-icon">🔍</div>
+                  <h3>該当するユーザーが見つかりませんでした</h3>
+                  <p>検索条件を変更してお試しください</p>
+                  <button @click="clearFilters" class="clear-filters-button">
+                    フィルタをクリア
+                  </button>
+                </div>
+              </td>
+            </tr>
             <tr v-for="user in paginatedUsers" :key="user.id">
               <td>{{ user.name }}</td>
               <td>{{ user.email }}</td>
@@ -770,6 +782,81 @@ export default {
   
   .pagination-info {
     order: -1;
+  }
+}
+
+/* 空状態スタイル */
+.empty-row {
+  background-color: transparent !important;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px !important;
+  border: none !important;
+}
+
+.empty-message {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+.empty-icon {
+  font-size: 48px;
+  opacity: 0.5;
+}
+
+.empty-message h3 {
+  font-size: 18px;
+  color: #333;
+  margin: 0;
+  font-weight: 600;
+}
+
+.empty-message p {
+  font-size: 14px;
+  color: #666;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.clear-filters-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.2s;
+  margin-top: 8px;
+}
+
+.clear-filters-button:hover {
+  background-color: #0056b3;
+  transform: translateY(-1px);
+}
+
+@media (max-width: 768px) {
+  .empty-state {
+    padding: 40px 15px !important;
+  }
+  
+  .empty-icon {
+    font-size: 36px;
+  }
+  
+  .empty-message h3 {
+    font-size: 16px;
+  }
+  
+  .empty-message p {
+    font-size: 13px;
   }
 }
 </style>
