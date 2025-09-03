@@ -9,15 +9,34 @@
       <div class="search-form">
         <input 
           type="text" 
-          placeholder="ユーザーを検索..." 
+          v-model="searchKeyword"
+          placeholder="名前またはメールで検索..." 
           class="search-input"
         />
-        <button class="search-button">検索</button>
+        <select v-model="filterRole" class="filter-select">
+          <option value="">すべてのロール</option>
+          <option value="admin">管理者</option>
+          <option value="caregiver">介護士</option>
+          <option value="viewer">閲覧者</option>
+        </select>
+        <select v-model="filterStatus" class="filter-select">
+          <option value="">すべての状態</option>
+          <option value="active">アクティブ</option>
+          <option value="inactive">非アクティブ</option>
+          <option value="pending">承認待ち</option>
+        </select>
+        <button @click="clearFilters" class="clear-button">クリア</button>
       </div>
     </div>
 
     <div class="users-section">
-      <h2>ユーザー一覧</h2>
+      <div class="section-header">
+        <h2>ユーザー一覧</h2>
+        <div class="results-info">
+          {{ filteredUsers.length }}件中 {{ startIndex + 1 }}-{{ Math.min(startIndex + itemsPerPage, filteredUsers.length) }}件を表示
+        </div>
+      </div>
+      
       <div class="table-container">
         <table class="users-table">
           <thead>
@@ -29,7 +48,7 @@
             </tr>
           </thead>
           <tbody>
-            <tr v-for="user in users" :key="user.id">
+            <tr v-for="user in paginatedUsers" :key="user.id">
               <td>{{ user.name }}</td>
               <td>{{ user.email }}</td>
               <td>{{ getRoleDisplayName(user.role) }}</td>
@@ -42,6 +61,29 @@
           </tbody>
         </table>
       </div>
+
+      <!-- ページネーション -->
+      <div class="pagination" v-if="totalPages > 1">
+        <button 
+          @click="goToPage(currentPage - 1)" 
+          :disabled="currentPage === 1"
+          class="pagination-button"
+        >
+          前へ
+        </button>
+        
+        <span class="pagination-info">
+          {{ currentPage }} / {{ totalPages }} ページ
+        </span>
+        
+        <button 
+          @click="goToPage(currentPage + 1)" 
+          :disabled="currentPage === totalPages"
+          class="pagination-button"
+        >
+          次へ
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -51,6 +93,20 @@ export default {
   name: 'AdminView',
   data() {
     return {
+      // フィルタ条件
+      searchKeyword: '',
+      debouncedSearchKeyword: '', // debounce用の内部キーワード
+      filterRole: '',
+      filterStatus: '',
+      
+      // ページネーション
+      currentPage: 1,
+      itemsPerPage: 10,
+      
+      // debounce用
+      searchDebounceTimer: null,
+      
+      // ダミーユーザーデータ（テスト用に追加データを含む）
       users: [
         {
           id: 1,
@@ -86,9 +142,124 @@ export default {
           email: 'yamada@example.com',
           role: 'viewer',
           status: 'pending'
+        },
+        {
+          id: 6,
+          name: '伊藤和子',
+          email: 'ito@example.com',
+          role: 'admin',
+          status: 'active'
+        },
+        {
+          id: 7,
+          name: '渡辺直樹',
+          email: 'watanabe@example.com',
+          role: 'caregiver',
+          status: 'inactive'
+        },
+        {
+          id: 8,
+          name: '小林真理',
+          email: 'kobayashi@example.com',
+          role: 'viewer',
+          status: 'active'
+        },
+        {
+          id: 9,
+          name: '加藤雅彦',
+          email: 'kato@example.com',
+          role: 'caregiver',
+          status: 'pending'
+        },
+        {
+          id: 10,
+          name: '吉田彩香',
+          email: 'yoshida@example.com',
+          role: 'admin',
+          status: 'active'
+        },
+        {
+          id: 11,
+          name: '松本良一',
+          email: 'matsumoto@example.com',
+          role: 'viewer',
+          status: 'active'
+        },
+        {
+          id: 12,
+          name: '中村さくら',
+          email: 'nakamura@example.com',
+          role: 'caregiver',
+          status: 'active'
         }
       ]
     };
+  },
+  computed: {
+    // フィルタリングされたユーザー一覧
+    filteredUsers() {
+      let filtered = this.users;
+      
+      // キーワード検索（名前・メールの部分一致）- debounced keyword使用
+      if (this.debouncedSearchKeyword) {
+        const keyword = this.debouncedSearchKeyword.toLowerCase();
+        filtered = filtered.filter(user => 
+          user.name.toLowerCase().includes(keyword) || 
+          user.email.toLowerCase().includes(keyword)
+        );
+      }
+      
+      // ロールフィルタ
+      if (this.filterRole) {
+        filtered = filtered.filter(user => user.role === this.filterRole);
+      }
+      
+      // 状態フィルタ
+      if (this.filterStatus) {
+        filtered = filtered.filter(user => user.status === this.filterStatus);
+      }
+      
+      return filtered;
+    },
+    
+    // ページネーション用の計算
+    totalPages() {
+      return Math.ceil(this.filteredUsers.length / this.itemsPerPage);
+    },
+    
+    startIndex() {
+      return (this.currentPage - 1) * this.itemsPerPage;
+    },
+    
+    // 現在のページに表示するユーザー
+    paginatedUsers() {
+      const start = this.startIndex;
+      const end = start + this.itemsPerPage;
+      return this.filteredUsers.slice(start, end);
+    }
+  },
+  watch: {
+    // searchKeywordの変更をdebounce処理
+    searchKeyword(newValue) {
+      // 既存のタイマーをクリア
+      if (this.searchDebounceTimer) {
+        clearTimeout(this.searchDebounceTimer);
+      }
+      
+      // 新しいタイマーをセット（300ms後に実行）
+      this.searchDebounceTimer = setTimeout(() => {
+        this.debouncedSearchKeyword = newValue;
+        this.currentPage = 1; // 検索時は1ページ目に戻る
+      }, 300);
+    },
+    
+    // その他のフィルタ条件が変更されたら1ページ目に戻る
+    filterRole() {
+      this.currentPage = 1;
+    },
+    filterStatus() {
+      this.currentPage = 1;
+    }
   },
   methods: {
     getRoleDisplayName(role) {
@@ -106,6 +277,35 @@ export default {
         'pending': '承認待ち'
       };
       return statusMap[status] || status;
+    },
+    
+    // フィルタクリア
+    clearFilters() {
+      // debounceタイマーをクリア
+      if (this.searchDebounceTimer) {
+        clearTimeout(this.searchDebounceTimer);
+        this.searchDebounceTimer = null;
+      }
+      
+      this.searchKeyword = '';
+      this.debouncedSearchKeyword = '';
+      this.filterRole = '';
+      this.filterStatus = '';
+      this.currentPage = 1;
+    },
+    
+    // ページ移動
+    goToPage(page) {
+      if (page >= 1 && page <= this.totalPages) {
+        this.currentPage = page;
+      }
+    }
+  },
+  
+  // コンポーネント破棄時のクリーンアップ
+  beforeDestroy() {
+    if (this.searchDebounceTimer) {
+      clearTimeout(this.searchDebounceTimer);
     }
   }
 };
@@ -144,11 +344,13 @@ export default {
 .search-form {
   display: flex;
   gap: 10px;
-  max-width: 400px;
+  flex-wrap: wrap;
+  align-items: center;
 }
 
 .search-input {
   flex: 1;
+  min-width: 250px;
   padding: 10px;
   border: 2px solid #ddd;
   border-radius: 4px;
@@ -160,9 +362,23 @@ export default {
   border-color: #007bff;
 }
 
-.search-button {
-  padding: 10px 20px;
-  background-color: #007bff;
+.filter-select {
+  padding: 10px;
+  border: 2px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: white;
+  cursor: pointer;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #007bff;
+}
+
+.clear-button {
+  padding: 10px 15px;
+  background-color: #6c757d;
   color: white;
   border: none;
   border-radius: 4px;
@@ -171,14 +387,27 @@ export default {
   transition: background-color 0.2s;
 }
 
-.search-button:hover {
-  background-color: #0056b3;
+.clear-button:hover {
+  background-color: #545b62;
 }
 
-.users-section h2 {
-  font-size: 1.5rem;
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   margin-bottom: 20px;
+}
+
+.section-header h2 {
+  font-size: 1.5rem;
   color: #333;
+  margin: 0;
+}
+
+.results-info {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
 }
 
 .table-container {
@@ -237,6 +466,46 @@ export default {
   color: #856404;
 }
 
+/* ページネーション */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+  padding: 20px;
+}
+
+.pagination-button {
+  padding: 8px 16px;
+  border: 2px solid #007bff;
+  background-color: white;
+  color: #007bff;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.pagination-button:hover:not(:disabled) {
+  background-color: #007bff;
+  color: white;
+}
+
+.pagination-button:disabled {
+  border-color: #ccc;
+  color: #ccc;
+  cursor: not-allowed;
+}
+
+.pagination-info {
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+  min-width: 100px;
+  text-align: center;
+}
+
 @media (max-width: 768px) {
   .admin-view {
     padding: 10px;
@@ -244,6 +513,21 @@ export default {
   
   .search-form {
     flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .search-input {
+    min-width: auto;
+  }
+  
+  .section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  
+  .results-info {
+    align-self: flex-end;
   }
   
   .users-table {
@@ -253,6 +537,15 @@ export default {
   .users-table th,
   .users-table td {
     padding: 10px 8px;
+  }
+  
+  .pagination {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .pagination-info {
+    order: -1;
   }
 }
 </style>
